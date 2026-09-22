@@ -1,0 +1,8 @@
+<resources>
+    <!-- Tema base del sistema de arranque; el theming real de la UI vive en Compose (ui/theme). -->
+    <style name="Theme.CoDi" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">#0E0E14</item>
+        <item name="android:navigationBarColor">#0E0E14</item>
+        <item name="android:windowBackground">#0E0E14</item>
+    </style>
+</resources>

@@ -1,0 +1,37 @@
+# ── Compilación (se regenera sola) ──
+build/
+.gradle/
+.kotlin/
+.externalNativeBuild/
+.cxx/
+/captures/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# ── Android Studio / IntelliJ ──
+.idea/
+*.iml
+.artifacts/
+
+# ── Configuración de cada computadora ──
+local.properties
+
+# ── Sistema ──
+.DS_Store
+Thumbs.db
+
+# ── Firma de release: NUNCA subir ──
+# Sin estos archivos nadie puede firmar actualizaciones de la app.
+/keystore/
+keystore.properties
+*.jks
+*.keystore
+
+# ── Firebase ──
+# Identifica el proyecto de Firebase (trae la API key). No es una contraseña,
+# pero en un repositorio público es mejor no publicarlo: quien clone el
+# proyecto debe descargar el suyo desde Firebase Console → Configuración del
+# proyecto → Tus apps → com.codi.app.v1, y guardarlo en app/.
+google-services.json
