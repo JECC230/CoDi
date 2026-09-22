@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+<path fill="#3B5BFE" fill-opacity="0.8" d="M50,20c4,-2 8,0 10,4s0,8 -4,10s-8,0 -10,-4s0,-8 4,-10z"/>
+<path fill="#8B2FD6" fill-opacity="0.9" d="M65,25c4,-1 7,2 8,6s-1,8 -5,9s-7,-2 -8,-6s1,-8 5,-9z"/>
+<path fill="#FF2D78" d="M75,35c3,1 5,5 4,9s-5,5 -9,4s-5,-5 -4,-9s5,-5 9,-4z"/>
+<path fill="#FF2D78" fill-opacity="0.9" d="M80,50c1,4 -2,8 -6,10s-8,0 -9,-4s2,-8 6,-10s8,0 9,4z"/>
+<path fill="#8B2FD6" fill-opacity="0.8" d="M75,65c-1,4 -5,6 -9,5s-6,-5 -5,-9s5,-6 9,-5s6,5 5,9z"/>
+<path fill="#3B5BFE" fill-opacity="0.7" d="M60,75c-2,4 -6,5 -10,3s-5,-6 -3,-10s6,-5 10,-3s5,6 3,10z"/>
+<path fill="#3B5BFE" fill-opacity="0.8" d="M45,80c-4,1 -8,-2 -9,-6s2,-8 6,-9s8,2 9,6s-2,8 -6,9z"/>
+<path fill="#8B2FD6" fill-opacity="0.9" d="M30,75c-4,-1 -6,-5 -5,-9s5,-6 9,-5s6,5 5,9s-5,6 -9,5z"/>
+<path fill="#FF2D78" d="M20,60c-2,-4 0,-8 4,-10s8,0 10,4s0,8 -4,10s-8,0 -10,-4z"/>
+<path fill="#FF2D78" fill-opacity="0.9" d="M20,40c0,-4 4,-7 8,-6s7,4 6,8s-4,7 -8,6s-7,-4 -6,-8z"/>
+<path fill="#8B2FD6" fill-opacity="0.8" d="M30,25c2,-4 6,-5 10,-3s5,6 3,10s-6,5 -10,3s-5,-6 -3,-10z"/>
+<path fill="#3B5BFE" fill-opacity="0.5" d="M50,40c1,0 2,1 2,2s-1,2 -2,2s-2,-1 -2,-2s1,-2 2,-2z"/>
+<path fill="#FF2D78" fill-opacity="0.5" d="M60,50c1,0 2,1 2,2s-1,2 -2,2s-2,-1 -2,-2s1,-2 2,-2z"/>
+<path fill="#8B2FD6" fill-opacity="0.5" d="M45,55c1,0 2,1 2,2s-1,2 -2,2s-2,-1 -2,-2s1,-2 2,-2z"/>
+</svg>

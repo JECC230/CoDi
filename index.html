@@ -1,0 +1,893 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CoDi para Android</title>
+<meta name="description" content="CoDi: encuentra a tu roomie ideal. Desliza perfiles compatibles, haz match y platica. Descarga el APK para Android.">
+<meta name="theme-color" content="#07060C" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta property="og:title" content="CoDi — encuentra a tu roomie ideal">
+<meta property="og:description" content="Desliza, haz match y platica con roomies compatibles. App para Android.">
+<meta property="og:image" content="assets/screen-home.jpg">
+<link rel="icon" href="assets/codi-logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap">
+<style>
+/* ───────────── Tokens ───────────── */
+:root{
+  --ink:#F2F2F7;            /* fondo (claro, estilo iOS grouped) */
+  --ink-2:#E7E7EE;
+  --text:#1D1D1F;
+  --text-2:#55556A;
+  --text-3:#7A7A8C;
+  --pink:#FF2D78; --violet:#8B2FD6; --blue:#3B5BFE;
+  --kicker-a:#E0115F; --kicker-b:#2F4BE0;
+  --text-halo:none;
+  --blob-a:.55; --blob-b:.45;
+  --glass:rgba(255,255,255,.52);
+  --glass-strong:rgba(255,255,255,.72);
+  --glass-rim:rgba(255,255,255,.9);
+  --glass-rim-low:rgba(255,255,255,.25);
+  --glass-shadow:0 1px 1px rgba(20,20,40,.04),0 12px 40px rgba(40,30,90,.12);
+  --spec:rgba(255,255,255,.75);
+  --hair:rgba(20,20,40,.08);
+  --btn-solid-bg:#1D1D1F; --btn-solid-fg:#FFFFFF;
+  --focus:#3B5BFE;
+  --grain-opacity:.035;
+  --sf-display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Helvetica Neue",system-ui,sans-serif;
+  --sf-text:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Helvetica Neue",system-ui,sans-serif;
+  --sf-mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.2,.8,.2,1);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#07060C; --ink-2:#0E0C16;
+    --text:#F7F7FA; --text-2:#D6D6E2; --text-3:#ABABBE;
+    --blob-a:.5; --blob-b:.42;
+    --glass:rgba(16,12,28,.42);
+    --glass-strong:rgba(58,50,84,.38);
+    --kicker-a:#FF7AAB; --kicker-b:#9DB0FF;
+    --text-halo:0 1px 18px rgba(4,3,10,.55);
+    --glass-rim:rgba(255,255,255,.38);
+    --glass-rim-low:rgba(255,255,255,.06);
+    --glass-shadow:0 1px 1px rgba(0,0,0,.3),0 20px 60px rgba(0,0,0,.45);
+    --spec:rgba(255,255,255,.22);
+    --hair:rgba(255,255,255,.08);
+    --btn-solid-bg:#F5F5F7; --btn-solid-fg:#0B0A12;
+    --focus:#8FA2FF;
+    --grain-opacity:.06;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#07060C; --ink-2:#0E0C16;
+  --text:#F7F7FA; --text-2:#D6D6E2; --text-3:#ABABBE;
+  --blob-a:.5; --blob-b:.42;
+  --glass:rgba(16,12,28,.42);
+  --glass-strong:rgba(58,50,84,.38);
+  --kicker-a:#FF7AAB; --kicker-b:#9DB0FF;
+  --text-halo:0 1px 18px rgba(4,3,10,.55);
+  --glass-rim:rgba(255,255,255,.38);
+  --glass-rim-low:rgba(255,255,255,.06);
+  --glass-shadow:0 1px 1px rgba(0,0,0,.3),0 20px 60px rgba(0,0,0,.45);
+  --spec:rgba(255,255,255,.22);
+  --hair:rgba(255,255,255,.08);
+  --btn-solid-bg:#F5F5F7; --btn-solid-fg:#0B0A12;
+  --focus:#8FA2FF;
+  --grain-opacity:.06;
+  color-scheme:dark;
+}
+
+/* ───────────── Base ───────────── */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--ink);color:var(--text);
+  font-family:var(--sf-text);font-size:17px;line-height:1.47;letter-spacing:-.011em;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  overflow-x:hidden;
+}
+img{max-width:100%;display:block}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:12px}
+.wrap{width:min(1180px,100%);margin-inline:auto;padding-inline:max(20px,env(safe-area-inset-left,0px))}
+h1,h2,h3{font-family:var(--sf-display);margin:0;text-wrap:balance;color:var(--text)}
+p{margin:0;text-wrap:pretty}
+
+/* ───────────── Atmósfera: manchas de color bajo el vidrio ───────────── */
+.atmos{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none}
+.blob{position:absolute;border-radius:50%;filter:blur(80px);will-change:transform}
+.blob.b1{width:52vmax;height:52vmax;left:-14vmax;top:-18vmax;background:var(--pink);opacity:var(--blob-a);animation:drift1 26s var(--ease) infinite alternate}
+.blob.b2{width:46vmax;height:46vmax;right:-16vmax;top:8vmax;background:var(--blue);opacity:var(--blob-a);animation:drift2 32s var(--ease) infinite alternate}
+.blob.b3{width:40vmax;height:40vmax;left:22vmax;top:44vmax;background:var(--violet);opacity:var(--blob-b);animation:drift3 38s var(--ease) infinite alternate}
+@keyframes drift1{to{transform:translate(18vmax,14vmax) scale(1.12)}}
+@keyframes drift2{to{transform:translate(-14vmax,20vmax) scale(.9)}}
+@keyframes drift3{to{transform:translate(-18vmax,-16vmax) scale(1.15)}}
+.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:var(--grain-opacity);
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+
+/* ───────────── Liquid Glass ───────────── */
+.glass{
+  position:relative;isolation:isolate;
+  background:linear-gradient(160deg,var(--glass-strong),var(--glass) 55%);
+  -webkit-backdrop-filter:blur(26px) saturate(180%);
+  backdrop-filter:blur(26px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 var(--glass-rim),
+    inset 0 -1px 0 var(--glass-rim-low),
+    inset 1px 0 0 var(--glass-rim-low),
+    inset -1px 0 0 var(--glass-rim-low),
+    var(--glass-shadow);
+  --gx:30%;--gy:0%;
+}
+/* borde con luz: anillo en degradado recortado con máscara */
+.glass::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;z-index:1;
+  background:linear-gradient(140deg,var(--glass-rim),transparent 38%,transparent 62%,var(--glass-rim-low));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+}
+/* brillo especular que sigue al puntero */
+.glass::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0;
+  background:radial-gradient(420px circle at var(--gx) var(--gy),var(--spec),transparent 55%);
+  opacity:.9;transition:opacity .4s var(--ease);
+}
+.glass > *{position:relative;z-index:2}
+
+/* ───────────── Botones (cápsulas estilo iOS) ───────────── */
+.btn{
+  --h:52px;display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  height:var(--h);padding:0 26px;border-radius:999px;border:0;cursor:pointer;
+  font-family:var(--sf-text);font-size:17px;font-weight:600;letter-spacing:-.02em;text-decoration:none;
+  color:var(--text);white-space:nowrap;
+  transition:transform .35s var(--spring),box-shadow .3s var(--ease),background-color .3s;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn:active{transform:scale(.96)}
+.btn svg{width:20px;height:20px;flex:none}
+.btn-solid{background:var(--btn-solid-bg);color:var(--btn-solid-fg);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 10px 30px rgba(59,91,254,.25)}
+.btn-solid:hover{transform:translateY(-1px) scale(1.02)}
+.btn-glass:hover{transform:translateY(-1px)}
+.btn-sm{--h:38px;padding:0 16px;font-size:15px}
+
+/* ───────────── Navegación flotante ───────────── */
+.nav{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:50;
+  width:min(760px,calc(100% - 24px));border-radius:999px;padding:7px 7px 7px 16px;
+  display:flex;align-items:center;gap:12px;transition:padding .4s var(--ease),width .5s var(--ease)}
+.nav.scrolled{width:min(640px,calc(100% - 24px))}
+.brand{display:flex;align-items:center;gap:9px;text-decoration:none;font-family:var(--sf-display);font-weight:700;font-size:19px;letter-spacing:-.03em}
+.brand img{width:28px;height:28px}
+.nav-links{display:flex;gap:2px;margin-left:auto}
+.nav-links a{font-size:14px;font-weight:500;color:var(--text-2);text-decoration:none;padding:8px 12px;border-radius:999px;transition:color .2s,background-color .2s}
+.nav-links a:hover{color:var(--text);background:var(--hair)}
+.theme-toggle{width:38px;height:38px;border-radius:50%;border:0;cursor:pointer;display:grid;place-items:center;color:var(--text);background:transparent}
+.theme-toggle:hover{background:var(--hair)}
+.theme-toggle svg{width:19px;height:19px}
+@media (max-width:760px){.nav-links{display:none}.nav .btn-sm{margin-left:auto}}
+
+/* ───────────── Hero ───────────── */
+.hero{padding-top:calc(128px + env(safe-area-inset-top,0px));padding-bottom:72px}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+@media (max-width:940px){.hero-grid{grid-template-columns:1fr;gap:48px}}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 8px;border-radius:999px;font-size:13px;font-weight:600;color:var(--text-2);letter-spacing:-.005em}
+.eyebrow .dot{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--pink),var(--blue));color:#fff}
+.eyebrow .dot svg{width:12px;height:12px}
+.hero h1{margin-top:22px;font-size:clamp(46px,7.4vw,92px);line-height:.98;letter-spacing:-.048em;font-weight:700}
+.hero h1 .shine{
+  background:linear-gradient(100deg,var(--pink) 0%,var(--violet) 35%,var(--blue) 65%,var(--pink) 100%);
+  background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:shine 9s linear infinite}
+@keyframes shine{to{background-position:-220% 0}}
+.lede{margin-top:22px;font-size:clamp(18px,1.9vw,21px);line-height:1.45;color:var(--text-2);max-width:34ch;letter-spacing:-.018em}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
+.meta-row{display:flex;flex-wrap:wrap;gap:18px;margin-top:22px;font-size:13px;color:var(--text-3);font-family:var(--sf-mono);letter-spacing:0}
+.meta-row span{display:inline-flex;align-items:center;gap:6px}
+.meta-row svg{width:14px;height:14px}
+
+/* Texto que va directo sobre las manchas de color: halo sutil en oscuro */
+.hero h1,.lede,.meta-row,.deck-hint,.sec h2,.sec .sub,footer{text-shadow:var(--text-halo)}
+
+/* Mazo interactivo */
+.deck-stage{position:relative;display:grid;justify-items:center;gap:22px}
+.deck{position:relative;width:min(360px,100%);aspect-ratio:3/4.1;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.card{
+  position:absolute;inset:0;border-radius:34px;overflow:hidden;cursor:grab;color:#fff;
+  background:linear-gradient(150deg,var(--pink),var(--violet) 52%,var(--blue));
+  box-shadow:0 30px 60px rgba(40,10,90,.35),inset 0 1px 0 rgba(255,255,255,.4);
+  padding:26px 24px 22px;display:flex;flex-direction:column;align-items:center;text-align:center;
+  transition:transform .55s var(--spring),opacity .4s var(--ease);will-change:transform;
+}
+.card.dragging{transition:none;cursor:grabbing}
+.card::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(170deg,rgba(255,255,255,.28),transparent 34%);mix-blend-mode:soft-light}
+.card .avatar{width:96px;height:96px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+.card .avatar span{width:78px;height:78px;border-radius:50%;display:grid;place-items:center;font-family:var(--sf-display);font-weight:700;font-size:30px;letter-spacing:-.03em}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.2);font-size:14px;font-weight:600;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.pill svg{width:14px;height:14px}
+.card .zone{margin-top:16px}
+.card h3{color:#fff;margin-top:12px;font-size:30px;letter-spacing:-.035em;font-weight:700}
+.card .job{font-size:15px;opacity:.9;margin-top:2px}
+.chips{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:14px}
+.chips .pill{font-size:13px;padding:5px 11px;font-weight:600}
+.card .bio{margin-top:14px;font-size:15px;line-height:1.42;opacity:.93}
+.card .compat{margin-top:auto;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600}
+.meter{width:120px;height:6px;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden}
+.meter i{display:block;height:100%;border-radius:inherit;background:#fff}
+.stamp{position:absolute;top:26px;padding:6px 14px;border-radius:12px;font-family:var(--sf-display);font-weight:800;font-size:22px;letter-spacing:.02em;border:3px solid #fff;opacity:0;transition:opacity .15s}
+.stamp.like{left:22px;transform:rotate(-14deg)}
+.stamp.nope{right:22px;transform:rotate(14deg)}
+.deck-actions{display:flex;gap:14px}
+.round{width:64px;height:64px;border-radius:50%;border:0;cursor:pointer;display:grid;place-items:center;color:var(--text);transition:transform .35s var(--spring)}
+.round:hover{transform:scale(1.07)}.round:active{transform:scale(.92)}
+.round svg{width:26px;height:26px}
+.round.like svg{color:var(--pink)}
+.deck-hint{font-size:13px;color:var(--text-3);text-align:center;max-width:36ch}
+.deck-empty{position:absolute;inset:0;border-radius:34px;display:grid;place-content:center;gap:14px;text-align:center;padding:28px}
+.deck-empty p{color:var(--text-2);font-size:15px}
+.deck-empty strong{font-family:var(--sf-display);font-size:24px;letter-spacing:-.03em;color:var(--text)}
+
+/* Notificación tipo sistema */
+.toast{position:fixed;left:50%;top:calc(80px + env(safe-area-inset-top,0px));z-index:60;width:min(380px,calc(100% - 32px));
+  border-radius:24px;padding:12px 14px;display:flex;gap:12px;align-items:center;
+  transform:translate(-50%,calc(-100% - 140px));visibility:hidden;
+  transition:transform .7s var(--spring),visibility 0s linear .7s}
+.toast.show{transform:translate(-50%,0);visibility:visible;transition:transform .7s var(--spring),visibility 0s}
+.toast img{width:38px;height:38px;border-radius:10px;background:#fff;padding:3px}
+.toast b{display:block;font-size:15px;letter-spacing:-.02em}
+.toast small{font-size:14px;color:var(--text-2);line-height:1.3;display:block}
+.toast time{margin-left:auto;align-self:flex-start;font-size:12px;color:var(--text-3)}
+
+/* ───────────── Cinta de colonias ───────────── */
+.ribbon{margin-top:8px;overflow:hidden;padding-block:18px;
+  -webkit-mask:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.ribbon-track{display:flex;gap:10px;width:max-content;animation:marquee 60s linear infinite}
+.ribbon:hover .ribbon-track{animation-play-state:paused}
+.ribbon .tag{border-radius:999px;padding:10px 18px;font-size:15px;font-weight:500;color:var(--text-2);white-space:nowrap;display:inline-flex;gap:8px;align-items:center}
+.ribbon .tag i{width:7px;height:7px;border-radius:50%;background:var(--c)}
+@keyframes marquee{to{transform:translateX(-50%)}}
+
+/* ───────────── Secciones ───────────── */
+section{scroll-margin-top:90px}
+.sec{padding-block:clamp(72px,11vw,140px)}
+.sec-head{max-width:760px}
+.kicker{font-size:15px;font-weight:600;letter-spacing:-.01em;background:linear-gradient(90deg,var(--kicker-a),var(--kicker-b));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sec h2{margin-top:10px;font-size:clamp(36px,5.2vw,64px);line-height:1.03;letter-spacing:-.042em;font-weight:700}
+.sec .sub{margin-top:18px;font-size:clamp(17px,1.6vw,20px);color:var(--text-2);max-width:56ch;letter-spacing:-.016em}
+
+/* Cómo funciona: teléfono fijo + pasos */
+.story{display:grid;grid-template-columns:minmax(260px,380px) 1fr;gap:clamp(40px,7vw,110px);margin-top:64px}
+@media (max-width:860px){.story{grid-template-columns:1fr}}
+.phone-sticky{position:sticky;top:calc(110px + env(safe-area-inset-top,0px));align-self:start}
+@media (max-width:860px){.phone-sticky{position:relative;top:0;justify-self:center;width:min(300px,78%)}}
+.phone{position:relative;border-radius:48px;padding:10px;aspect-ratio:9/19.5;max-width:100%}
+.phone .screen{position:relative;width:100%;height:100%;border-radius:39px;overflow:hidden;background:#0B0A12}
+.phone .screen img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;opacity:0;transform:scale(1.04);transition:opacity .6s var(--ease),transform .9s var(--ease)}
+.phone .screen img.on{opacity:1;transform:none}
+.phone .screen::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(125deg,rgba(255,255,255,.14),transparent 30%)}
+.steps{display:grid;gap:clamp(60px,14vh,160px);padding-block:4vh 12vh}
+@media (max-width:860px){.steps{gap:28px;padding-block:0}}
+.step{border-radius:30px;padding:30px 30px 32px;transition:transform .5s var(--ease),opacity .5s var(--ease);opacity:.55;transform:scale(.97)}
+.step.active{opacity:1;transform:none}
+@media (max-width:860px){.step{opacity:1;transform:none}}
+.step .n{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-family:var(--sf-display);font-weight:700;font-size:17px;color:#fff;background:linear-gradient(135deg,var(--pink),var(--blue))}
+.step h3{margin-top:18px;font-size:clamp(24px,2.6vw,32px);letter-spacing:-.035em;line-height:1.1}
+.step p{margin-top:10px;color:var(--text-2);max-width:48ch}
+
+/* Bento */
+.bento{display:grid;grid-template-columns:repeat(6,1fr);gap:16px;margin-top:56px}
+.tile{border-radius:30px;padding:28px;display:flex;flex-direction:column;gap:10px;min-height:250px;overflow:hidden}
+.tile h3{font-size:24px;letter-spacing:-.032em;line-height:1.12}
+.tile p{color:var(--text-2);font-size:16px}
+.t-cloud{grid-column:span 4}.t-100{grid-column:span 2}
+.t-chat{grid-column:span 2}.t-google{grid-column:span 2}.t-theme{grid-column:span 2}
+.t-notif{grid-column:span 3}.t-edit{grid-column:span 3}
+@media (max-width:980px){.bento{grid-template-columns:repeat(2,1fr)}.bento .tile{grid-column:span 1}.t-cloud{grid-column:span 2}}
+@media (max-width:600px){.bento{grid-template-columns:1fr}.bento .tile,.t-cloud{grid-column:span 1}}
+.big-num{font-family:var(--sf-display);font-weight:700;font-size:clamp(72px,8vw,108px);line-height:.9;letter-spacing:-.06em;
+  background:linear-gradient(160deg,var(--pink),var(--violet) 45%,var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sync{margin-top:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.device{border-radius:18px;padding:12px 14px;display:flex;gap:10px;align-items:center;font-size:14px;font-weight:600}
+.device small{display:block;font-weight:400;color:var(--text-3);font-size:12px}
+.device svg{width:22px;height:22px;color:var(--violet)}
+.sync-line{flex:1;min-width:40px;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--pink),var(--blue));position:relative;overflow:hidden}
+.sync-line::after{content:"";position:absolute;inset:0;width:30%;background:linear-gradient(90deg,transparent,#fff,transparent);animation:pulse 2.2s var(--ease) infinite}
+@keyframes pulse{from{transform:translateX(-100%)}to{transform:translateX(340%)}}
+.fields{font-family:var(--sf-mono);font-size:12.5px;color:var(--text-3);line-height:1.7;letter-spacing:0}
+.fields b{color:var(--text-2);font-weight:500}
+.bubbles{margin-top:auto;display:grid;gap:8px}
+.bubble{max-width:82%;padding:9px 14px;border-radius:20px;font-size:14.5px;line-height:1.35}
+.bubble.them{border-bottom-left-radius:6px}
+.bubble.me{justify-self:end;color:#fff;background:linear-gradient(135deg,var(--violet),var(--blue));border-bottom-right-radius:6px}
+.typing{display:inline-flex;gap:4px;padding:12px 14px;border-radius:20px;border-bottom-left-radius:6px;width:max-content}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--text-3);animation:blink 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+.gbtn{margin-top:auto;height:50px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:600;font-size:15px}
+.gbtn svg{width:20px;height:20px}
+.seg{margin-top:auto;display:grid;grid-template-columns:repeat(3,1fr);padding:4px;border-radius:999px;position:relative}
+.seg button{position:relative;z-index:2;border:0;background:transparent;height:40px;border-radius:999px;font:600 14px var(--sf-text);color:var(--text-2);cursor:pointer;letter-spacing:-.01em}
+.seg button[aria-pressed="true"]{color:var(--text)}
+.seg .thumb{position:absolute;z-index:1;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/3);border-radius:999px;background:var(--glass-strong);box-shadow:inset 0 1px 0 var(--glass-rim),0 4px 14px rgba(0,0,0,.12);transition:transform .5s var(--spring)}
+.notif{margin-top:auto;border-radius:20px;padding:12px 14px;display:flex;gap:12px;align-items:center}
+.notif img{width:34px;height:34px;border-radius:9px;background:#fff;padding:3px}
+.notif b{font-size:14px;display:block}.notif small{font-size:13.5px;color:var(--text-2)}
+.edit-demo{margin-top:auto;display:flex;align-items:center;gap:16px}
+.edit-avatar{width:74px;height:74px;border-radius:50%;background:linear-gradient(135deg,#5B8CFF,#9B7BFF);display:grid;place-items:center;position:relative;flex:none}
+.edit-avatar svg{width:30px;height:30px;color:rgba(255,255,255,.9)}
+.edit-avatar .cam{position:absolute;right:-4px;bottom:-4px;width:30px;height:30px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.edit-avatar .cam svg{width:15px;height:15px;color:var(--violet)}
+.counter{font-family:var(--sf-mono);font-size:12.5px;color:var(--text-3)}
+
+/* Galería de pantallas */
+.gallery{display:flex;justify-content:center;align-items:flex-end;gap:clamp(14px,3vw,36px);margin-top:64px;perspective:1600px}
+.gallery .phone{width:min(270px,30vw)}
+.gallery .phone:nth-child(1){transform:rotateY(18deg) translateY(30px)}
+.gallery .phone:nth-child(3){transform:rotateY(-18deg) translateY(30px)}
+.gallery .phone .screen img{opacity:1;transform:none}
+.gallery figcaption{text-align:center;margin-top:14px;font-size:14px;color:var(--text-3)}
+@media (max-width:640px){
+  .gallery{justify-content:flex-start;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:10px;perspective:none;margin-inline:-20px;padding-inline:20px}
+  .gallery figure{scroll-snap-align:center;flex:none}
+  .gallery .phone{width:62vw}
+  .gallery .phone:nth-child(n){transform:none}
+}
+figure{margin:0}
+
+/* Tecnología */
+.tech{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;margin-top:56px}
+@media (max-width:900px){.tech{grid-template-columns:1fr}}
+.stack{border-radius:30px;padding:30px;display:flex;flex-wrap:wrap;gap:10px;align-content:flex-start}
+.stack h3{width:100%;font-size:22px;letter-spacing:-.03em;margin-bottom:6px}
+.chip{border-radius:999px;padding:9px 16px;font-size:15px;font-weight:500;display:inline-flex;align-items:center;gap:8px}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.specs{border-radius:30px;padding:10px 30px}
+.specs dl{margin:0}
+.specs .row{display:flex;justify-content:space-between;gap:16px;padding:15px 0;border-bottom:1px solid var(--hair);font-size:15px}
+.specs .row:last-child{border-bottom:0}
+.specs dt{color:var(--text-2)}
+.specs dd{margin:0;font-family:var(--sf-mono);font-size:14px;text-align:right;font-variant-numeric:tabular-nums;letter-spacing:0;word-break:break-all}
+
+/* Descarga */
+.download{border-radius:44px;padding:clamp(28px,5vw,64px);display:grid;grid-template-columns:1.2fr .8fr;gap:clamp(28px,5vw,64px);align-items:center;margin-top:0}
+@media (max-width:860px){.download{grid-template-columns:1fr}}
+.app-id{display:flex;align-items:center;gap:18px}
+.app-icon{width:84px;height:84px;border-radius:22px;display:grid;place-items:center;background:linear-gradient(135deg,var(--pink),var(--violet) 50%,var(--blue));box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 14px 34px rgba(139,47,214,.4);flex:none}
+.app-icon img{width:62px;height:62px;filter:brightness(0) invert(1) drop-shadow(0 1px 1px rgba(0,0,0,.15))}
+.app-id h2{font-size:clamp(30px,4vw,44px);letter-spacing:-.04em;line-height:1.05}
+.app-id p{color:var(--text-2);font-size:16px;margin-top:4px}
+.install{margin-top:30px;display:grid;gap:14px;counter-reset:s}
+.install li{list-style:none;display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start;font-size:16px;color:var(--text-2)}
+.install li::before{counter-increment:s;content:counter(s);width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font:700 14px var(--sf-display);color:var(--text);background:var(--glass-strong);box-shadow:inset 0 1px 0 var(--glass-rim)}
+.install b{color:var(--text);font-weight:600}
+.install ol{margin:0;padding:0}
+.qr-card{border-radius:30px;padding:24px;display:grid;justify-items:center;gap:14px;text-align:center}
+.qr{width:188px;height:188px;padding:12px;border-radius:20px;background:#fff;display:grid;place-items:center}
+.qr svg{width:164px;height:164px;display:block}
+.qr-card p{font-size:14px;color:var(--text-2);max-width:26ch}
+.sha{font-family:var(--sf-mono);font-size:11.5px;color:var(--text-3);word-break:break-all;letter-spacing:0}
+
+footer{padding-block:48px calc(48px + env(safe-area-inset-bottom,0px));color:var(--text-3);font-size:14px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-between;align-items:center;border-top:1px solid var(--hair);padding-top:28px}
+footer a{color:var(--text-2);text-decoration:none}
+footer a:hover{color:var(--text)}
+
+/* Entrada al hacer scroll (mejora progresiva; sin ella todo queda visible) */
+@supports (animation-timeline: view()){
+  .reveal{animation:rise linear both;animation-timeline:view();animation-range:entry 0% cover 28%}
+  @keyframes rise{from{opacity:.35;transform:translateY(36px) scale(.985)}to{opacity:1;transform:none}}
+}
+/* Secuencia de carga del hero */
+.hero .load{animation:enter 1s var(--ease) both}
+.hero .load:nth-child(2){animation-delay:.08s}.hero .load:nth-child(3){animation-delay:.16s}
+.hero .load:nth-child(4){animation-delay:.24s}.hero .load:nth-child(5){animation-delay:.32s}
+@keyframes enter{from{transform:translateY(18px);filter:blur(6px)}to{transform:none;filter:none}}
+.deck-stage{animation:float-in 1.2s var(--ease) .2s both}
+@keyframes float-in{from{transform:translateY(40px) rotate(2deg)}to{transform:none}}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .phone .screen img{transition:none}
+}
+</style>
+</head>
+<body>
+
+<div class="atmos" aria-hidden="true"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- Navegación -->
+<header class="nav glass" id="nav">
+  <a class="brand" href="#top" aria-label="CoDi, inicio"><img src="assets/codi-logo.svg" alt="">CoDi</a>
+  <nav class="nav-links" aria-label="Secciones">
+    <a href="#como-funciona">Cómo funciona</a>
+    <a href="#funciones">Funciones</a>
+    <a href="#tecnologia">Tecnología</a>
+  </nav>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Cambiar tema claro u oscuro">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9A7 7 0 0 1 12 3Z"/></svg>
+  </button>
+  <a class="btn btn-solid btn-sm" href="#descargar">Descargar</a>
+</header>
+
+<main id="top">
+  <!-- Hero -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow glass load"><span class="dot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.2 0 3.6 1.2 5.2 3 1.6-1.8 3-3 5.2-3 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21Z"/></svg></span>Versión 1.0 para Android</span>
+        <h1 class="load">Tu próximo roomie<br>está a un <span class="shine">swipe</span>.</h1>
+        <p class="lede load">CoDi te muestra personas compatibles por presupuesto, horario, orden y estilo de vida. Si hay interés de los dos lados, hacen match y platican ahí mismo.</p>
+        <div class="cta-row load">
+          <a class="btn btn-solid" href="downloads/CoDi-v1.0.apk" download id="heroDownload">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>
+            Descargar APK
+          </a>
+          <a class="btn btn-glass glass" href="#como-funciona">Ver cómo funciona</a>
+        </div>
+        <div class="meta-row load">
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2.5" width="12" height="19" rx="3"/></svg>Android 8.0+</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg>3.0 MB</span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 18a5 5 0 0 1-.5-10 6 6 0 0 1 11.5 1.5A4.3 4.3 0 0 1 17.5 18Z"/></svg>Sincroniza en la nube</span>
+        </div>
+      </div>
+
+      <div class="deck-stage" aria-label="Prueba: desliza perfiles de ejemplo">
+        <div class="deck" id="deck">
+          <div class="deck-empty glass" id="deckEmpty" hidden>
+            <strong>Esos fueron 4 de 100.</strong>
+            <p>El catálogo completo, tus matches y el chat están en la app.</p>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+              <a class="btn btn-solid btn-sm" href="#descargar">Descargar</a>
+              <button class="btn btn-glass glass btn-sm" type="button" id="deckReset">Otra vez</button>
+            </div>
+          </div>
+        </div>
+        <div class="deck-actions">
+          <button class="round glass" type="button" id="btnPass" aria-label="Pasar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </button>
+          <button class="round glass like" type="button" id="btnLike" aria-label="Me interesa">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.2 0 3.6 1.2 5.2 3 1.6-1.8 3-3 5.2-3 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21Z"/></svg>
+          </button>
+        </div>
+        <p class="deck-hint">Arrastra la tarjeta o usa los botones · perfiles de ejemplo del catálogo</p>
+      </div>
+    </div>
+
+    <div class="ribbon" aria-label="Colonias del catálogo">
+      <div class="ribbon-track" id="ribbon"></div>
+    </div>
+  </section>
+
+  <!-- Cómo funciona -->
+  <section class="sec" id="como-funciona">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="kicker">Cómo funciona</p>
+        <h2>De "busco depa" a "¿cuándo te mudas?" en tres pasos.</h2>
+      </div>
+      <div class="story">
+        <div class="phone-sticky">
+          <div class="phone glass">
+            <div class="screen">
+              <img src="assets/screen-login.jpg" alt="Pantalla de inicio de sesión de CoDi" class="on" data-step="0" width="720" height="1600">
+              <img src="assets/screen-home.jpg" alt="Tarjeta de un perfil en el mazo de Home" data-step="1" width="720" height="1600" loading="lazy">
+              <img src="assets/screen-perfil.jpg" alt="Pantalla de perfil con edad, CoDis y presupuesto" data-step="2" width="720" height="1600" loading="lazy">
+            </div>
+          </div>
+        </div>
+        <div class="steps">
+          <article class="step glass active" data-step="0">
+            <span class="n">1</span>
+            <h3>Crea tu cuenta en segundos</h3>
+            <p>Con tu correo o con "Continuar con Google". Pedimos nombre, apellido y fecha de nacimiento; tu edad se calcula sola, y el presupuesto lo agregas cuando quieras.</p>
+          </article>
+          <article class="step glass" data-step="1">
+            <span class="n">2</span>
+            <h3>Desliza entre perfiles compatibles</h3>
+            <p>Cada tarjeta dice la colonia, a qué se dedica, sus intereses y qué tan compatibles son. "Pasar" la saca del mazo; "Me Interesa" hace match y te avisa con una notificación.</p>
+          </article>
+          <article class="step glass" data-step="2">
+            <span class="n">3</span>
+            <h3>Haz que tu perfil hable por ti</h3>
+            <p>Foto de tu galería, bio de hasta 280 caracteres, género e intereses como "No fumador", "Gym" o "Estudio nocturno". Tocas el lápiz, editas y queda guardado en la nube.</p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Funciones -->
+  <section class="sec" id="funciones">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="kicker">Funciones</p>
+        <h2>Pensada para compartir depa, no para perder el tiempo.</h2>
+      </div>
+
+      <div class="bento">
+        <article class="tile glass t-cloud reveal">
+          <h3>Tu cuenta vive en la nube.</h3>
+          <p>Tu perfil, tus matches y cada mensaje se guardan en tu cuenta. Cambia de celular, inicia sesión y todo está donde lo dejaste. Sin señal también funciona: se sincroniza solo al volver la red.</p>
+          <div class="sync">
+            <div class="device glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M11 18.5h2"/></svg><span>Tu teléfono<small>Android</small></span></div>
+            <div class="sync-line" aria-hidden="true"></div>
+            <div class="device glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 18a5 5 0 0 1-.5-10 6 6 0 0 1 11.5 1.5A4.3 4.3 0 0 1 17.5 18Z"/></svg><span>users/{uid}<small>Cloud Firestore</small></span></div>
+          </div>
+          <p class="fields">swipes/<b>p1</b> · chats/<b>María López</b>/messages · firstName · birthDate · interests</p>
+        </article>
+
+        <article class="tile glass t-100 reveal">
+          <span class="big-num" data-count="100">100</span>
+          <h3>perfiles para empezar</h3>
+          <p>De Roma Norte a Tlalpan Centro, con horarios, nivel de orden y fecha de mudanza.</p>
+        </article>
+
+        <article class="tile glass t-chat reveal">
+          <h3>Match, y a platicar.</h3>
+          <div class="bubbles" aria-hidden="true">
+            <div class="bubble them glass">¿El depa acepta mascotas pequeñas?</div>
+            <div class="bubble me">Sí, ya tengo un perrito viviendo ahí 🐶</div>
+            <div class="typing glass"><i></i><i></i><i></i></div>
+          </div>
+        </article>
+
+        <article class="tile glass t-google reveal">
+          <h3>Entra con Google.</h3>
+          <p>El selector nativo de cuentas de Android. Un toque y listo.</p>
+          <div class="gbtn glass" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.5 12.3c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.5c2.1-1.9 3.3-4.7 3.3-8Z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.2-2.7l-3.5-2.7c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-1.9-6.2-4.5H2.2v2.8A11 11 0 0 0 12 23Z"/><path fill="#FBBC05" d="M5.8 14.2a6.6 6.6 0 0 1 0-4.3V7.1H2.2a11 11 0 0 0 0 9.9Z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.1-3.1A11 11 0 0 0 2.2 7.1l3.6 2.8C6.7 7.3 9.1 5.4 12 5.4Z"/></svg>
+            Continuar con Google
+          </div>
+        </article>
+
+        <article class="tile glass t-theme reveal">
+          <h3>Claro, oscuro o como tu teléfono.</h3>
+          <p>Pruébalo: este selector cambia también esta página.</p>
+          <div class="seg glass" role="group" aria-label="Tema">
+            <span class="thumb" id="segThumb"></span>
+            <button type="button" data-theme-choice="system" aria-pressed="true">Sistema</button>
+            <button type="button" data-theme-choice="light" aria-pressed="false">Claro</button>
+            <button type="button" data-theme-choice="dark" aria-pressed="false">Oscuro</button>
+          </div>
+        </article>
+
+        <article class="tile glass t-notif reveal">
+          <h3>Te avisa cuando alguien contesta.</h3>
+          <p>Notificaciones de match y de mensajes nuevos, aunque tengas la app cerrada.</p>
+          <div class="notif glass" aria-hidden="true">
+            <img src="assets/codi-logo.svg" alt="">
+            <span><b>Daniel Torres</b><small>Sí, sin problema, ya tengo un perrito viviendo ahí</small></span>
+          </div>
+        </article>
+
+        <article class="tile glass t-edit reveal">
+          <h3>Un perfil que se edita con un lápiz.</h3>
+          <p>Vista limpia por defecto; tocas el lápiz y aparece el formulario. "Guardar cambios" solo se activa si algo cambió y todo es válido.</p>
+          <div class="edit-demo" aria-hidden="true">
+            <div class="edit-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 19.5c1.3-3.3 4-5 7-5s5.7 1.7 7 5"/></svg><span class="cam"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 4.5 7.6 6.5H5A2.5 2.5 0 0 0 2.5 9v8.5A2.5 2.5 0 0 0 5 20h14a2.5 2.5 0 0 0 2.5-2.5V9A2.5 2.5 0 0 0 19 6.5h-2.6L15 4.5Zm3 4.5a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/></svg></span></div>
+            <div><b style="font-size:15px">Estudiante tranquilo, busco depa cerca de CU.</b><div class="counter">45/280</div></div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Galería -->
+  <section class="sec" id="pantallas" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="kicker">Así se ve</p>
+        <h2>Capturas reales, sin maquillaje.</h2>
+        <p class="sub">Tomadas de la app corriendo en un Pixel 6. Mismo gradiente de marca en el mazo, en tu perfil y en el match.</p>
+      </div>
+      <div class="gallery reveal">
+        <figure><div class="phone glass"><div class="screen"><img src="assets/screen-login.jpg" alt="Inicio de sesión" loading="lazy" width="720" height="1600"></div></div><figcaption>Inicio de sesión</figcaption></figure>
+        <figure><div class="phone glass"><div class="screen"><img src="assets/screen-home.jpg" alt="Mazo de perfiles" loading="lazy" width="720" height="1600"></div></div><figcaption>Home</figcaption></figure>
+        <figure><div class="phone glass"><div class="screen"><img src="assets/screen-perfil.jpg" alt="Perfil propio" loading="lazy" width="720" height="1600"></div></div><figcaption>Tu perfil</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tecnología -->
+  <section class="sec" id="tecnologia" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="kicker">El proyecto</p>
+        <h2>Hecha como se hacen las apps de verdad.</h2>
+        <p class="sub">CoDi es un proyecto académico de desarrollo móvil: una app nativa de Android escrita en Kotlin, con autenticación real y base de datos en la nube. Los 100 perfiles del mazo son ficticios; tu cuenta y tus datos no.</p>
+      </div>
+      <div class="tech">
+        <div class="stack glass reveal">
+          <h3>Construida con</h3>
+          <span class="chip glass" style="--c:#7F52FF"><i></i>Kotlin 2.0</span>
+          <span class="chip glass" style="--c:#4285F4"><i></i>Jetpack Compose</span>
+          <span class="chip glass" style="--c:#3B5BFE"><i></i>Material 3</span>
+          <span class="chip glass" style="--c:#FFA000"><i></i>Firebase Authentication</span>
+          <span class="chip glass" style="--c:#FF6D00"><i></i>Cloud Firestore</span>
+          <span class="chip glass" style="--c:#34A853"><i></i>Credential Manager</span>
+          <span class="chip glass" style="--c:#8B2FD6"><i></i>WorkManager</span>
+          <span class="chip glass" style="--c:#FF2D78"><i></i>Navigation Compose</span>
+          <span class="chip glass" style="--c:#4CD9B0"><i></i>Coroutines + Flow</span>
+        </div>
+        <div class="specs glass reveal">
+          <dl>
+            <div class="row"><dt>Versión</dt><dd>1.0 (1)</dd></div>
+            <div class="row"><dt>Paquete</dt><dd>com.codi.app.v1</dd></div>
+            <div class="row"><dt>Requiere</dt><dd>Android 8.0 · API 26</dd></div>
+            <div class="row"><dt>Compilada para</dt><dd>API 35</dd></div>
+            <div class="row"><dt>Tamaño</dt><dd>3.0 MB</dd></div>
+            <div class="row"><dt>Permisos</dt><dd>Internet · Notificaciones</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Descarga -->
+  <section class="sec" id="descargar" style="padding-top:0">
+    <div class="wrap">
+      <div class="download glass reveal">
+        <div>
+          <div class="app-id">
+            <div class="app-icon"><img src="assets/codi-logo.svg" alt=""></div>
+            <div>
+              <h2>CoDi para Android</h2>
+              <p>Gratis · Sin anuncios · Versión 1.0</p>
+            </div>
+          </div>
+          <div class="cta-row">
+            <a class="btn btn-solid" href="downloads/CoDi-v1.0.apk" download>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>
+              Descargar APK · 3.0 MB
+            </a>
+          </div>
+          <ol class="install">
+            <li><span><b>Descarga el APK</b> desde tu celular Android (o escanea el código).</span></li>
+            <li><span>Ábrelo. Si Android lo pide, permite <b>"Instalar apps desconocidas"</b> para tu navegador.</span></li>
+            <li><span>Toca <b>Instalar</b>, abre CoDi y crea tu cuenta.</span></li>
+          </ol>
+        </div>
+        <div class="qr-card glass">
+          <div class="qr" id="qr" role="img" aria-label="Código QR para descargar el APK"></div>
+          <p id="qrNote">Escanea con la cámara de tu Android para descargar directo.</p>
+          <p class="sha">SHA-256 1115d8be2db6ed3d…</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>CoDi v1 · Proyecto académico de desarrollo de apps móviles · Hecho en CDMX</span>
+    <span style="display:flex;gap:20px"><a href="#como-funciona">Cómo funciona</a><a href="#descargar">Descargar</a></span>
+  </div>
+</footer>
+
+<div class="toast glass" id="toast" role="status" aria-live="polite">
+  <img src="assets/codi-logo.svg" alt="">
+  <span><b>¡Es un match!</b><small id="toastText">A María López también le gustaría ser tu CoDi</small></span>
+  <time>ahora</time>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(() => {
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const root = document.documentElement;
+
+  /* ── Tema: Sistema / Claro / Oscuro ── */
+  const store = {
+    get(){ try { return localStorage.getItem('codi-theme') || 'system'; } catch { return 'system'; } },
+    set(v){ try { localStorage.setItem('codi-theme', v); } catch {} }
+  };
+  const segButtons = [...document.querySelectorAll('[data-theme-choice]')];
+  const thumb = document.getElementById('segThumb');
+  function applyTheme(choice){
+    if (choice === 'system') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', choice);
+    segButtons.forEach((b, i) => {
+      const on = b.dataset.themeChoice === choice;
+      b.setAttribute('aria-pressed', on);
+      if (on) thumb.style.transform = `translateX(${i * 100}%)`;
+    });
+    store.set(choice);
+  }
+  segButtons.forEach(b => b.addEventListener('click', () => applyTheme(b.dataset.themeChoice)));
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    applyTheme(dark ? 'light' : 'dark');
+  });
+  applyTheme(store.get());
+
+  /* ── Brillo especular del vidrio ── */
+  if (!reduced) {
+    document.addEventListener('pointermove', e => {
+      const el = e.target.closest && e.target.closest('.glass');
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      el.style.setProperty('--gx', `${e.clientX - r.left}px`);
+      el.style.setProperty('--gy', `${e.clientY - r.top}px`);
+    }, { passive: true });
+  }
+
+  /* ── Navegación compacta al hacer scroll ── */
+  const nav = document.getElementById('nav');
+  addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 40), { passive: true });
+
+  /* ── Cinta de colonias (del catálogo real de la app) ── */
+  const zones = ['Roma Norte','Condesa','Narvarte','Del Valle','Coyoacán','Polanco','Nápoles','Escandón','Santa María la Ribera','San Rafael','Juárez','Anzures','Doctores','Portales','Álamos','Tabacalera','Iztaccíhuatl','Tlalpan Centro','Zona Norte'];
+  const palette = ['#FF6B9A','#9B7BFF','#5B8CFF','#FFA45B','#4CD9B0','#E85BD8'];
+  const track = document.getElementById('ribbon');
+  const tags = zones.map((z, i) => `<span class="tag glass" style="--c:${palette[i % palette.length]}"><i></i>${z}</span>`).join('');
+  track.innerHTML = tags + tags.replace(/class="tag glass"/g, 'class="tag glass" aria-hidden="true"');
+
+  /* ── Mazo interactivo (perfiles del catálogo de la app) ── */
+  const people = [
+    { name:'María López', age:24, zone:'Zona Norte', job:'Diseñadora UX', compat:92, color:'#FF6B9A', tags:['Cocinar','Música','Series','Yoga'],
+      bio:'Tranquila y ordenada. Busco CoDi con horarios similares para compartir un depa cerca del metro.' },
+    { name:'Daniel Torres', age:27, zone:'Roma Norte', job:'Ingeniero de software', compat:81, color:'#9B7BFF', tags:['Gym','Cine','Cocinar','Perros'],
+      bio:'Trabajo híbrido. Tengo un perro pequeño y busco depa pet friendly para compartir.' },
+    { name:'Camila Ruiz', age:23, zone:'Condesa', job:'Estudiante de posgrado', compat:88, color:'#5B8CFF', tags:['Arte','Yoga','Plantas','Café'],
+      bio:'Casi no estoy entre semana. Busco un espacio tranquilo, con buena luz y respeto al silencio.' },
+    { name:'Jorge Medina', age:26, zone:'Nápoles', job:'Diseñador freelance', compat:75, color:'#FFA45B', tags:['Videojuegos','Música','Cocinar'],
+      bio:'Horario flexible. Me encanta cocinar para el CoDi en turno y armar noches de juegos de mesa.' }
+  ];
+  const deck = document.getElementById('deck');
+  const empty = document.getElementById('deckEmpty');
+  const pin = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21Z"/><circle cx="12" cy="10" r="2.3"/></svg>';
+  const initials = n => n.split(' ').map(p => p[0]).join('').slice(0,2);
+
+  function cardHTML(p){
+    return `<div class="avatar"><span style="background:${p.color}">${initials(p.name)}</span></div>
+      <span class="pill zone">${pin}${p.zone}</span>
+      <h3>${p.name}, ${p.age}</h3>
+      <p class="job">${p.job}</p>
+      <div class="chips">${p.tags.map(t => `<span class="pill">${t}</span>`).join('')}</div>
+      <p class="bio">${p.bio}</p>
+      <div class="compat"><span class="meter"><i style="width:${p.compat}%"></i></span>${p.compat}% compatible</div>
+      <span class="stamp like">ME INTERESA</span><span class="stamp nope">PASAR</span>`;
+  }
+  function build(){
+    deck.querySelectorAll('.card').forEach(c => c.remove());
+    empty.hidden = true;
+    [...people].reverse().forEach((p, i, arr) => {
+      const c = document.createElement('article');
+      c.className = 'card';
+      c.dataset.name = p.name;
+      c.setAttribute('aria-label', `${p.name}, ${p.age} años, ${p.zone}, ${p.compat}% compatible`);
+      c.innerHTML = cardHTML(p);
+      const depth = arr.length - 1 - i;
+      c.style.transform = `translateY(${depth * 12}px) scale(${1 - depth * .045})`;
+      c.style.filter = depth ? `brightness(${1 - depth * .12})` : '';
+      c.style.zIndex = i + 1;
+      deck.appendChild(c);
+    });
+    wire();
+  }
+  const topCard = () => { const cs = deck.querySelectorAll('.card:not(.gone)'); return cs[cs.length - 1]; };
+  function restack(){
+    const cs = [...deck.querySelectorAll('.card:not(.gone)')].reverse();
+    cs.forEach((c, depth) => {
+      c.style.transform = `translateY(${depth * 12}px) scale(${1 - depth * .045})`;
+      c.style.filter = depth ? `brightness(${1 - depth * .12})` : '';
+    });
+    if (!cs.length) empty.hidden = false;
+  }
+  let toastTimer;
+  function showMatch(name){
+    const t = document.getElementById('toast');
+    document.getElementById('toastText').textContent = `A ${name} también le gustaría ser tu CoDi`;
+    t.classList.add('show'); clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+  }
+  function fling(card, dir){
+    card.classList.add('gone');
+    card.style.transform = `translate(${dir * 140}%, -6%) rotate(${dir * 22}deg)`;
+    card.style.opacity = '0';
+    if (dir > 0) showMatch(card.dataset.name);
+    setTimeout(() => { card.remove(); restack(); }, 450);
+    restack();
+  }
+  function wire(){
+    const card = topCard(); if (!card || card.dataset.wired) return;
+    card.dataset.wired = '1';
+    let x0 = 0, y0 = 0, dx = 0, dragging = false;
+    const like = card.querySelector('.stamp.like'), nope = card.querySelector('.stamp.nope');
+    card.addEventListener('pointerdown', e => {
+      dragging = true; x0 = e.clientX; y0 = e.clientY; dx = 0;
+      card.setPointerCapture(e.pointerId); card.classList.add('dragging');
+    });
+    card.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      dx = e.clientX - x0; const dy = (e.clientY - y0) * .25;
+      card.style.transform = `translate(${dx}px, ${dy}px) rotate(${dx / 18}deg)`;
+      like.style.opacity = Math.max(0, Math.min(1, dx / 90));
+      nope.style.opacity = Math.max(0, Math.min(1, -dx / 90));
+    });
+    const end = () => {
+      if (!dragging) return; dragging = false; card.classList.remove('dragging');
+      like.style.opacity = nope.style.opacity = 0;
+      if (Math.abs(dx) > 100) { fling(card, Math.sign(dx)); setTimeout(wire, 460); }
+      else restack();
+    };
+    card.addEventListener('pointerup', end);
+    card.addEventListener('pointercancel', end);
+  }
+  function act(dir){
+    const c = topCard(); if (!c) return;
+    c.querySelector(dir > 0 ? '.stamp.like' : '.stamp.nope').style.opacity = 1;
+    setTimeout(() => { fling(c, dir); setTimeout(wire, 460); }, reduced ? 0 : 120);
+  }
+  document.getElementById('btnLike').addEventListener('click', () => act(1));
+  document.getElementById('btnPass').addEventListener('click', () => act(-1));
+  document.getElementById('deckReset').addEventListener('click', build);
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('input,textarea')) return;
+    const r = deck.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight) return;
+    if (e.key === 'ArrowRight') act(1);
+    if (e.key === 'ArrowLeft') act(-1);
+  });
+  build();
+
+  /* ── Teléfono de "Cómo funciona": cambia de pantalla con cada paso ── */
+  const shots = [...document.querySelectorAll('.phone-sticky img')];
+  const steps = [...document.querySelectorAll('.step')];
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (!en.isIntersecting) return;
+      const i = en.target.dataset.step;
+      steps.forEach(s => s.classList.toggle('active', s.dataset.step === i));
+      shots.forEach(s => s.classList.toggle('on', s.dataset.step === i));
+    });
+  }, { rootMargin: '-45% 0px -45% 0px' });
+  steps.forEach(s => io.observe(s));
+
+  /* ── Contador del "100" ── */
+  const num = document.querySelector('[data-count]');
+  if (num && !reduced) {
+    const once = new IntersectionObserver(([en]) => {
+      if (!en.isIntersecting) return; once.disconnect();
+      const t0 = performance.now(), dur = 1400;
+      const tick = t => {
+        const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+        num.textContent = Math.round(e * 100);
+        if (k < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+    once.observe(num);
+  }
+
+  /* ── QR hacia el APK ──
+     Apunta a la dirección desde la que se abrió la página, así funciona igual
+     publicada que abierta en la red local (http://IP-de-la-Mac:8080). */
+  const apkUrl = new URL('downloads/CoDi-v1.0.apk', location.href).href;
+  const qrBox = document.getElementById('qr');
+  const qrNote = document.getElementById('qrNote');
+  const host = location.hostname;
+  const unreachable = location.protocol === 'file:' || host === 'localhost' || host === '127.0.0.1' || host === '::1';
+  if (unreachable) {
+    qrBox.innerHTML = '<p style="color:#0B0A12;font-size:13px;line-height:1.35;padding:8px">Abre esta página desde su dirección pública o la IP de tu red para generar el QR.</p>';
+    qrNote.textContent = 'Desde "localhost" tu celular no puede llegar a esta computadora.';
+  } else if (window.qrcode) {
+    const qr = qrcode(0, 'M');
+    qr.addData(apkUrl);
+    qr.make();
+    qrBox.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+    qrBox.title = apkUrl;
+  } else {
+    qrBox.innerHTML = `<p style="color:#0B0A12;font-size:12px;word-break:break-all">${apkUrl}</p>`;
+  }
+})();
+</script>
+</body>
+</html>
