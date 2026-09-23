@@ -1,61 +1,91 @@
-# CoDi v1 — encuentra a tu compañero de cuarto ideal
+# CoDi — encuentra a tu roomie ideal
 
-**CoDi** es una app de Android estilo Tinder para encontrar **co**mpañeros de **di**vidir cuarto (roomies): perfiles compatibles se descubren con swipe, se hace match y se platica por chat. Esta es la **v1**: una versión enfocada exclusivamente en el descubrimiento de roomies y en la cuenta/perfil del usuario, sin la sección de cuartos en renta.
+**CoDi** (**co**mpañeros de **di**vidir cuarto) es una app de Android para encontrar roomies compatibles. Funciona como Tinder: deslizas entre perfiles, haces match y chateas dentro de la app.
 
-> **Relación con v2**: este proyecto es una copia independiente de la versión anterior (que sigue viviendo en `avanceCoDi/CoDi`, sin tocar, como "v2"). v1 quita la sección de Cuartos, agrega registro de cuenta completo, edición de perfil estilo Instagram (con foto de galería) y una pantalla de Ajustes con selector de tema claro/oscuro real. `applicationId` es `com.codi.app.v1` (distinto al de v2) para poder instalar ambas versiones a la vez en el mismo dispositivo y compararlas.
+Esta es la **v1**, que solo cubre dos cosas: descubrir roomies y administrar tu cuenta y tu perfil.
 
----
-
-## Novedades de v1 frente a v2
-
-| Área | v2 | v1 (este proyecto) |
-|---|---|---|
-| Navegación | Home · Cuartos · Mensajes · Perfil | **Home · Mensajes · Perfil** (sin Cuartos) |
-| Catálogo del swipe | 5 perfiles | **100 perfiles** variados (5 escritos a mano + 95 generados con semilla fija) |
-| Cuentas | Login con credenciales fijas hardcodeadas | **Firebase Auth**: registro (nombre, apellido, fecha de nacimiento, ocupación, bio, correo/contraseña), login y **Google Sign-In**; perfil en **Cloud Firestore** |
-| Perfil | Solo bio editable | **Editor completo estilo Instagram**: foto desde galería, nombre, edad, ocupación, presupuesto, bio, género, chips de intereses/estilo de vida |
-| Ajustes | No existía | **Pantalla de Ajustes**: modo oscuro/claro real, soporte y ayuda, cuenta y seguridad, cerrar sesión |
-| Tema | Solo oscuro | **Oscuro y claro**, con switch persistente en Ajustes |
-| Cuartos/listings | Sí (listados, favoritos, detalle) | **Eliminado por completo** (pantallas, rutas, tabla `listings`, DAO) |
-
-Todo lo demás de la base (notificaciones locales con WorkManager, validaciones, accesibilidad, adaptabilidad, animaciones) se conserva igual que en v2.
+<!-- Agrega aquí capturas de pantalla o un GIF de la app -->
 
 ---
 
-## Firebase (Authentication + Cloud Firestore)
+## Características
 
-Proyecto de Firebase: **`codi-app-abe5b`**, app Android `com.codi.app.v1` (`app/google-services.json`).
+- **Swipe entre 100 perfiles** con filtros de compatibilidad por presupuesto, horarios, limpieza, género y estilo de vida.
+- **Match y chat**: cada conversación empieza con un match mutuo. Los perfiles del catálogo contestan solos.
+- **Cuentas con Firebase**: registro con correo y contraseña, inicio de sesión y **Continuar con Google**.
+- **Editor de perfil estilo Instagram**: foto de la galería, datos personales, bio, género y chips de intereses.
+- **Ajustes**: tema claro/oscuro que se guarda, soporte y ayuda, cambio de contraseña y cierre de sesión.
+- **Datos en la nube**: el perfil, los swipes y los chats viven en Cloud Firestore y siguen funcionando sin conexión gracias a su caché.
+- **Notificaciones locales** de mensajes nuevos con WorkManager.
+- **Accesible y adaptable**: descripciones de contenido, áreas táctiles de ≥ 48 dp, contraste ≥ 4.5:1 en los dos temas y navegación que se ajusta al tamaño de pantalla.
 
-- **Registro / login con correo y contraseña**: `createUserWithEmailAndPassword` / `signInWithEmailAndPassword` (`data/AuthRepository.kt`). Si el perfil no se puede guardar en Firestore al registrarse, la cuenta recién creada se borra para no dejar cuentas sin perfil.
-- **Continuar con Google**: flujo nativo con Credential Manager (`GetGoogleIdOption` → `GoogleAuthProvider.getCredential`). El `serverClientId` es el `default_web_client_id` que genera el plugin de Google Services a partir de `google-services.json`, sin cadenas quemadas en el código. La primera vez se crea el perfil con el nombre de la cuenta de Google.
-- **Cerrar sesión**: `FirebaseAuth.signOut()` + limpieza del estado de Credential Manager.
-- **Cambiar contraseña**: `FirebaseUser.updatePassword` (las cuentas de Google no tienen contraseña propia).
-- **Perfil en la nube**: documento `users/{uid}` con `firstName, lastName, birthDate (Long, millis UTC), email, occupation, city, bio, gender, budget, photoUri, interests` (`data/remote/UserProfileStore.kt`). Perfil lo lee en tiempo real (snapshot listener) y guarda directo ahí.
-- **Todo en la nube** (sin base local): decisiones del swipe en `users/{uid}/swipes/{profileId}`, chats en `users/{uid}/chats/{contacto}` y sus mensajes en `.../messages/{autoId}` (`data/remote/UserDataStore.kt`). La caché offline de Firestore hace que todo se vea al instante y se sincronice solo al volver la red.
-- **Chats**: una cuenta nueva empieza sin conversaciones; cada chat nace al hacer match o escribir, y los CoDis responden solos con mensajes genéricos al azar (`NewMessageWorker`).
-- **Foto de perfil**: se comprime a 512 px JPEG y se guarda en el perfil como `data:image/jpeg;base64,...` (`ProfilePhotoEncoder`), así viaja a cualquier dispositivo sin requerir Cloud Storage (plan Blaze).
-- El catálogo de 100 perfiles ficticios viaja dentro del APK (`data/catalog/Catalog.kt`).
+## Stack
 
-### Configuración pendiente en Firebase Console
+| Área | Tecnología |
+|---|---|
+| Lenguaje / UI | Kotlin, Jetpack Compose, Material 3 |
+| Navegación | Navigation Compose |
+| Autenticación | Firebase Authentication (correo/contraseña y Google con Credential Manager) |
+| Datos | Cloud Firestore con caché offline |
+| Tareas en segundo plano | WorkManager |
+| SDK | `minSdk` 26 · `targetSdk` / `compileSdk` 35 |
 
-1. **Authentication → Método de acceso**: habilitar **Correo electrónico/contraseña** y **Google**.
-2. **Configuración del proyecto → Tus apps → com.codi.app.v1**: agregar la huella **SHA-1** del keystore con que se firma la app (debug: `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android`).
-3. **Volver a descargar `google-services.json`** y reemplazar `app/google-services.json` (con Google habilitado trae el cliente OAuth web; sin él, el botón de Google avisa qué falta).
-4. **Firestore Database → Crear base de datos**, y en **Reglas**:
+---
 
+## Requisitos
+
+- Android Studio o Gradle desde la terminal
+- JDK 17 o más reciente (probado con JDK 21)
+- Un proyecto de Firebase propio (ver abajo)
+
+## Configurar Firebase
+
+`app/google-services.json` **no se incluye en el repositorio**. Para compilar la app necesitas tu propio proyecto de Firebase:
+
+1. Crea un proyecto en [Firebase Console](https://console.firebase.google.com/) y registra una app Android con el paquete `com.codi.app.v1`.
+2. En **Authentication → Método de acceso**, habilita **Correo electrónico/contraseña** y **Google**.
+3. En **Configuración del proyecto → Tus apps**, agrega la huella **SHA-1** del keystore que firma la app. Para el keystore de debug:
+   ```bash
+   keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android
+   ```
+4. Descarga `google-services.json` **después** de habilitar Google, para que incluya el cliente OAuth web, y colócalo en `app/`. Si ese cliente falta, el botón de Google le dice al usuario qué falta.
+5. En **Firestore Database**, crea la base de datos y publica estas reglas:
+
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /users/{userId} {
+         allow read, write: if request.auth != null && request.auth.uid == userId;
+         match /{document=**} {
+           allow read, write: if request.auth != null && request.auth.uid == userId;
+         }
+       }
+     }
+   }
+   ```
+
+## Compilar
+
+```bash
+# Debug
+./gradlew assembleDebug
+# → app/build/outputs/apk/debug/app-debug.apk
+
+# Release
+./gradlew assembleRelease
+# → app/build/outputs/apk/release/
 ```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      match /{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-    }
-  }
-}
+
+Si tu `java` por defecto no es compatible con Gradle, apunta `JAVA_HOME` a un JDK 17–21:
+
+```bash
+JAVA_HOME=/ruta/a/jdk-21 ./gradlew assembleDebug
 ```
+
+### Firma de release
+
+Para firmar el release, el build lee `keystore.properties` en la raíz del proyecto, que apunta a un keystore en `keystore/`. Ninguno de los dos archivos está en el repositorio. Si no existen, `assembleRelease` genera un APK sin firmar.
 
 ---
 
@@ -63,135 +93,101 @@ service cloud.firestore {
 
 ```
 com.codi.app
-├── CoDiApplication.kt        # Crea repository/authRepository; inicializa SessionManager y ThemePreferences
-├── MainActivity.kt           # Pide permiso de notificaciones; eleva el tema (claro/oscuro) a la raíz de Compose
+├── CoDiApplication.kt          # Crea los repositorios; inicializa SessionManager y ThemePreferences
+├── MainActivity.kt             # Permiso de notificaciones; aplica el tema en la raíz de Compose
 ├── data/
-│   ├── Models.kt               # CoDiProfile, ChatMessage, Conversation, UserProfile (con email/gender/photoUri)
-│   ├── Mappers.kt               # Entity -> modelo de dominio
-│   ├── CoDiRepository.kt       # Perfiles del swipe, chat/mensajes, perfil de la cuenta con sesión activa
-│   ├── AuthRepository.kt       # Firebase Auth: correo/contraseña, Google (Credential Manager), logout, cambio de contraseña
-│   ├── SessionManager.kt       # uid de la sesión activa de Firebase como StateFlow
-│   ├── remote/UserProfileStore.kt # Perfil propio en Cloud Firestore (users/{uid})
-│   ├── ThemePreferences.kt     # Preferencia de tema claro/oscuro, persistida en SharedPreferences
-│   └── catalog/Catalog.kt      # 100 perfiles ficticios (contenido de la app)
-├── notifications/              # NotificationHelper + NewMessageWorker (WorkManager), igual que v2
+│   ├── Models.kt               # CoDiProfile, ChatMessage, Conversation, UserProfile
+│   ├── Mappers.kt              # Conversión a modelos de dominio
+│   ├── CoDiRepository.kt       # Mazo de swipe, matches, chats y perfil de la sesión activa
+│   ├── AuthRepository.kt       # Firebase Auth: correo/contraseña, Google, logout, cambio de contraseña
+│   ├── SessionManager.kt       # uid de la sesión activa como StateFlow
+│   ├── ThemePreferences.kt     # Preferencia claro/oscuro guardada en SharedPreferences
+│   ├── remote/
+│   │   ├── UserProfileStore.kt # Perfil en Firestore (users/{uid})
+│   │   └── UserDataStore.kt    # Swipes y chats en Firestore
+│   └── catalog/Catalog.kt      # Catálogo de 100 perfiles ficticios
+├── notifications/              # NotificationHelper + NewMessageWorker (WorkManager)
 └── ui/
-    ├── navigation/              # CoDiApp (responsivo), Routes, NavHost con transiciones
-    ├── theme/                   # Color.kt (tokens claro/oscuro dinámicos), Theme.kt (dos ColorScheme)
-    ├── components/               # Botones, chips, avatar reutilizables
+    ├── navigation/             # CoDiApp (responsivo), rutas y NavHost con transiciones
+    ├── theme/                  # Tokens de color dinámicos y ColorScheme claro/oscuro
+    ├── components/             # Botones, chips y avatar reutilizables
     └── screens/
-        ├── login/                # LoginScreen + RegisterScreen (y sus ViewModels)
-        ├── home/                 # Swipe de 100 perfiles
-        ├── codi/                 # Detalle de un candidato a CoDi
-        ├── match/                # "¡Es un match!"
-        ├── mensajes/ , chat/      # Lista de conversaciones y chat
-        ├── perfil/                # Editor de perfil completo (foto, datos, intereses)
-        └── settings/              # Ajustes: apariencia, soporte, cuenta y seguridad
+        ├── login/              # Login y registro
+        ├── home/               # Swipe
+        ├── codi/               # Detalle de un perfil
+        ├── match/              # Pantalla de "¡Es un match!"
+        ├── mensajes/, chat/    # Lista de conversaciones y chat
+        ├── perfil/             # Editor de perfil
+        └── settings/           # Ajustes
 ```
 
-### Cómo funciona el tema claro/oscuro
+### Modelo de datos en Firestore
 
-`ThemePreferences` guarda la preferencia en `SharedPreferences` como un `MutableStateFlow<Boolean>`. `MainActivity` lo colecta y se lo pasa a `CoDiTheme(darkTheme = ...)`, que expone ese valor mediante `CompositionLocalProvider(LocalIsDarkTheme provides darkTheme)`. Los tokens de color que ya usaba cada pantalla (`TextPrimary`, `SurfaceCard`, `BackgroundDark`, etc., en `ui/theme/Color.kt`) se convirtieron de constantes a propiedades `@Composable` que leen ese `CompositionLocal` y devuelven el valor claro u oscuro correspondiente — así el switch de Ajustes cambia toda la app **sin tener que tocar ninguna pantalla**.
-
-### Cómo funciona la sesión (registro/login)
-
-- `SessionManager` escucha `FirebaseAuth.addAuthStateListener` y expone el `uid` activo como `StateFlow`. Firebase persiste la sesión, así que si no cierras sesión entras directo a Home (ver `CoDiNavHost`).
-- `CoDiRepository` hace `flatMapLatest` sobre ese `uid`: perfil, mazo, matches y chats (todo en Firestore) cambian solos al cambiar de cuenta.
-
----
-
-## Catálogo de 100 perfiles
-
-`SeedData.kt` combina 5 perfiles escritos a mano (referenciados por nombre en las conversaciones semilla de Mensajes) con 95 generados de forma procedural con una semilla fija (`Random(42)`), combinando nombres, zonas, ocupaciones, horarios, presupuestos e intereses de listas variadas — así el catálogo es siempre el mismo entre instalaciones, pero con abundancia y variedad real para probar el swipe, filtros de compatibilidad y el mazo vacío/reinicio.
-
-Los avatares siguen siendo círculos de color (`PlaceholderAvatar`) derivados de un `colorSeed`, no fotos reales — igual que en v2. La foto real de galería solo aplica a **tu propio perfil** (la cuenta con sesión activa), no al catálogo simulado.
-
----
-
-## Editor de perfil (estilo Instagram)
-
-- **Foto**: botón de cámara sobre el avatar abre el selector de imágenes del sistema (`ActivityResultContracts.GetContent()`); la imagen se comprime y se guarda en el perfil de Firestore, así que aparece en cualquier dispositivo.
-- **Datos editables**: nombre, edad, ocupación, presupuesto, bio (con contador de 280 caracteres), género (chips: Mujer/Hombre/Otro/Prefiero no decir) e intereses/estilo de vida (chips multi-selección: Mascotas, No fumador, Estudio nocturno, Música/DJ, Deportes, etc.).
-- Un solo botón **"Guardar cambios"**, habilitado solo si hay cambios y todos los campos son válidos; confirmación visual con ícono + texto ("Guardado en tu perfil") al terminar.
-
-## Ajustes (estilo Instagram)
-
-Se llega desde el ícono de engrane en la esquina superior de Perfil:
-
-- **Apariencia**: switch de modo oscuro/claro, con efecto inmediato en toda la app.
-- **Soporte y ayuda**: Centro de ayuda, Reportar un problema, Términos y condiciones — cada uno abre un diálogo informativo (simulado, sin backend de soporte real).
-- **Cuenta y seguridad**: Cambiar contraseña (Firebase Auth) y un botón claro de **Cerrar sesión**, que limpia la sesión y regresa a Login.
-
----
-
-## Accesibilidad y adaptabilidad
-
-Se conservan íntegras las auditorías de v2: `contentDescription` en íconos accionables, targets táctiles ≥48dp (incluido el nuevo botón de cambiar foto), contraste verificado (≥4.5:1) —incluido el nuevo tema claro, verificado con los mismos pares de color reescalados—, y `BoxWithConstraints` para alternar entre `NavigationBar` (compacto) y `NavigationRail` (≥600dp).
-
----
-
-## Landing page y APK
-
-La landing page (con el APK para descargar) vive en la rama **`gh-pages`** de este repositorio, separada del código de la app, y se publica con GitHub Pages.
-
-El release se firma con un keystore propio (`keystore/codi-release.jks` + `keystore.properties`). **Ninguno de los dos está en el repositorio** (ver `.gitignore`): guárdalos en un lugar seguro; sin ellos no se pueden publicar actualizaciones. La SHA-1 de esa firma debe estar registrada en Firebase para que Google Sign-In funcione en el APK de release.
-
-## Cómo compilar
-
-**Antes de compilar:** `app/google-services.json` no está en el repositorio. Descárgalo de Firebase Console → Configuración del proyecto → Tus apps → `com.codi.app.v1` y guárdalo en `app/`. Sin él, Gradle no puede armar la app.
-
-Requiere JDK 17+ (probado con JDK 21).
-
-```bash
-JAVA_HOME=/ruta/a/tu/jdk-21 ./gradlew assembleDebug
-# APK en: app/build/outputs/apk/debug/app-debug.apk
-
-JAVA_HOME=/ruta/a/tu/jdk-21 ./gradlew assembleRelease
-# APK en: app/build/outputs/apk/release/app-release-unsigned.apk
+```
+users/{uid}                          # Perfil del usuario
+├── swipes/{profileId}               # Decisión de swipe sobre un perfil del catálogo
+└── chats/{contacto}                 # Conversación
+    └── messages/{autoId}            # Mensajes
 ```
 
-Ambos se verificaron localmente (`clean assembleDebug assembleRelease`): compilan sin errores ni warnings del compilador de Kotlin.
+El documento de perfil guarda estos campos: `firstName`, `lastName`, `birthDate` (Long, milisegundos UTC), `email`, `occupation`, `city`, `bio`, `gender`, `budget`, `photoUri` e `interests`.
+
+### Autenticación
+
+- **Correo y contraseña**: usa `createUserWithEmailAndPassword` y `signInWithEmailAndPassword`. Si el perfil no se puede guardar en Firestore durante el registro, la cuenta recién creada se borra para que no queden cuentas sin perfil.
+- **Google**: flujo nativo con Credential Manager (`GetGoogleIdOption` → `GoogleAuthProvider.getCredential`). El `serverClientId` es el `default_web_client_id` que genera el plugin de Google Services, así que no hay IDs escritos en el código. En el primer inicio de sesión se crea el perfil con el nombre de la cuenta de Google.
+- **Sesión**: `SessionManager` escucha `FirebaseAuth.addAuthStateListener`. Firebase guarda la sesión entre aperturas, así que un usuario con sesión activa entra directo a Home. `CoDiRepository` aplica `flatMapLatest` sobre el `uid`, y así el perfil, el mazo, los matches y los chats cambian solos al cambiar de cuenta.
+- **Cambio de contraseña**: `FirebaseUser.updatePassword`. No aplica a cuentas de Google.
+
+### Foto de perfil
+
+La imagen se elige con `ActivityResultContracts.GetContent()`, se reduce a 512 px en JPEG y se guarda en el perfil como `data:image/jpeg;base64,...` (`ProfilePhotoEncoder`). Así aparece en cualquier dispositivo sin depender de Cloud Storage.
+
+### Tema claro/oscuro
+
+`ThemePreferences` expone la preferencia como un `StateFlow<Boolean>`. `MainActivity` la recolecta y se la pasa a `CoDiTheme(darkTheme = ...)`, que la publica en `LocalIsDarkTheme`. Los tokens de color (`TextPrimary`, `SurfaceCard`, `BackgroundDark`, etc.) son propiedades `@Composable` que leen ese `CompositionLocal`. Por eso el cambio de tema llega a toda la app sin que cada pantalla tenga que manejarlo.
+
+### Catálogo de perfiles
+
+El catálogo trae 100 perfiles ficticios dentro del APK: 5 escritos a mano y 95 generados con una semilla fija (`Random(42)`) a partir de listas de nombres, zonas, ocupaciones, horarios, presupuestos e intereses. Siempre sale el mismo entre instalaciones y alcanza para probar el swipe, los filtros y el reinicio del mazo vacío.
+
+Los avatares del catálogo son círculos de color que salen de un `colorSeed`. Solo el perfil del usuario usa una foto real.
+
+### Chats
+
+Una cuenta nueva empieza sin conversaciones. Cada chat se crea al hacer match o al escribir, y `NewMessageWorker` manda respuestas automáticas de los perfiles del catálogo junto con su notificación local.
 
 ---
 
-## Guía para el video demostrativo
+## Landing page
 
-1. **Registro**: tocar "Crear cuenta", llenar el formulario (mostrar una validación fallando) y crear la cuenta; mostrar el documento nuevo en `users/{uid}` en Firebase Console.
-2. **Login**: cerrar sesión desde Ajustes y volver a entrar con correo/contraseña (mostrar la validación en tiempo real).
-3. **Google**: desde Login, tocar "Continuar con Google" y elegir una cuenta.
-4. **Home**: swipe entre varios de los 100 perfiles, mostrar la animación de la tarjeta y llegar a un Match (con su notificación).
-5. **Chat**: enviar un mensaje y esperar la respuesta simulada + notificación.
-6. **Perfil**: tarjeta con gradiente (misma familia visual que Home), cambiar la foto, tocar el lápiz, editar nombre/bio/intereses/género y guardar; mostrar el cambio reflejado en Firestore.
-7. **Ajustes**: activar el tema claro (mostrar que toda la app cambia), abrir un diálogo de ayuda, cambiar la contraseña, y por último "Cerrar sesión" (regresa a Login).
+La landing page, con el APK para descargar, está en la rama [`gh-pages`](../../tree/gh-pages) y se publica con GitHub Pages.
 
----
-
-## Simulación de publicación en Google Play
-
-Los metadatos son los mismos que en v2 (categoría Lifestyle, `targetSdk`/`compileSdk` 35, `minSdk` 26), salvo que el título/descripción ya no mencionan cuartos en renta:
+## Ficha de Google Play
 
 - **Título**: CoDi — encuentra tu roomie
+- **Categoría**: Estilo de vida
 - **Descripción corta**: Encuentra compañeros de cuarto compatibles y chatea al hacer match.
-- **Descripción completa**: CoDi te ayuda a encontrar compañero(a) de cuarto ideal en segundos. Desliza entre perfiles compatibles según presupuesto, horarios, limpieza, género y estilo de vida; cuando hay match mutuo, chatea directo en la app. Crea tu cuenta con correo o continúa con Google, personaliza tu perfil con foto y descripción, y elige el tema claro u oscuro que prefieras.
-- **Política de privacidad**: tu cuenta se administra con Firebase Authentication y tu perfil, tu foto, tus matches y tus mensajes se guardan en Cloud Firestore, accesibles solo para tu cuenta; los perfiles del mazo son ficticios.
+- **Descripción completa**: CoDi te ayuda a encontrar a tu compañero(a) de cuarto ideal en segundos. Desliza entre perfiles compatibles según presupuesto, horarios, limpieza, género y estilo de vida; cuando hay match mutuo, chatea directo en la app. Crea tu cuenta con correo o continúa con Google, personaliza tu perfil con foto y descripción, y elige el tema claro u oscuro.
 
----
+## Privacidad
 
-## Checklist de la petición de v1
+Las cuentas se administran con Firebase Authentication. El perfil, la foto, los matches y los mensajes de cada usuario se guardan en Cloud Firestore, y las reglas de seguridad limitan el acceso a su propia cuenta. Los perfiles del mazo son ficticios.
 
-| Cambio pedido | Estado |
-|---|---|
-| Eliminar por completo la sección de Cuartos (bottom bar, riel, rutas, pantallas, DAO, tabla) | ✅ |
-| Aumentar el catálogo simulado a 100 perfiles | ✅ (5 de mano + 95 generados) |
-| Autenticación y registro completo con Firebase Auth | ✅ (requiere activar los proveedores en la consola) |
-| Login con Google (Credential Manager) | ✅ código listo; requiere SHA-1 + `google-services.json` actualizado |
-| Perfil 100% en Cloud Firestore (`users/{uid}`) | ✅ |
-| Login sin credenciales de prueba | ✅ |
-| Edición completa de perfil con foto de galería, bio con contador, género e intereses | ✅ |
-| Botón "Guardar cambios" con confirmación visual | ✅ |
-| Pantalla de Ajustes con modo oscuro/claro real | ✅ |
-| Soporte y ayuda (Centro de ayuda, Reportar un problema, Términos y condiciones) | ✅ diálogos informativos |
-| Cuenta y seguridad (cambiar contraseña, cerrar sesión) | ✅ |
-| Sin referencias rotas a Cuartos | ✅ verificado con búsqueda global |
-| `./gradlew assembleDebug` limpio | ✅ verificado |
-| README actualizado | ✅ este documento |
+Aquí está el README reescrito para el repositorio.
+
+Lo que quité:
+- Las notas personales: la comparación con v2 y la mención de avanceCoDi/CoDi.
+- El ID de tu proyecto de Firebase (codi-app-abe5b).
+- Frases de avance como "se verificaron localmente".
+
+Lo que cambié:
+- Configuración de Firebase: la sección "Configuración pendiente" ahora es una guía para que cualquiera arme su propio proyecto de Firebase.
+- Catálogo: tu texto menciona tanto Catalog.kt como SeedData.kt. Dejé solo Catalog.kt, que es el que aparece en el árbol de carpetas.
+- Release: tu texto dice que el release se firma, pero también apunta a app-release-unsigned.apk. Ahora dice que se firma solo si existe keystore.properties.
+- Estructura de datos en Firestore: la saqué a su propio diagrama.
+
+Pendientes para ti:
+- Capturas: dejé un espacio para agregar capturas de pantalla o un GIF.
+- Nombre de la carpeta de notas: en el árbol, Mappers.kt dice "Entity -> modelo", pero la app ya no tiene base local. Lo dejé como "Conversión a modelos de dominio"; revisa que sea correcto.
+- UserDataStore.kt: lo agregué al árbol porque tu texto lo menciona. Revisa que esté en data/remote/.
