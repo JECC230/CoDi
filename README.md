@@ -174,20 +174,3 @@ La landing page, con el APK para descargar, está en la rama [`gh-pages`](../../
 
 Las cuentas se administran con Firebase Authentication. El perfil, la foto, los matches y los mensajes de cada usuario se guardan en Cloud Firestore, y las reglas de seguridad limitan el acceso a su propia cuenta. Los perfiles del mazo son ficticios.
 
-Aquí está el README reescrito para el repositorio.
-
-Lo que quité:
-- Las notas personales: la comparación con v2 y la mención de avanceCoDi/CoDi.
-- El ID de tu proyecto de Firebase (codi-app-abe5b).
-- Frases de avance como "se verificaron localmente".
-
-Lo que cambié:
-- Configuración de Firebase: la sección "Configuración pendiente" ahora es una guía para que cualquiera arme su propio proyecto de Firebase.
-- Catálogo: tu texto menciona tanto Catalog.kt como SeedData.kt. Dejé solo Catalog.kt, que es el que aparece en el árbol de carpetas.
-- Release: tu texto dice que el release se firma, pero también apunta a app-release-unsigned.apk. Ahora dice que se firma solo si existe keystore.properties.
-- Estructura de datos en Firestore: la saqué a su propio diagrama.
-
-Pendientes para ti:
-- Capturas: dejé un espacio para agregar capturas de pantalla o un GIF.
-- Nombre de la carpeta de notas: en el árbol, Mappers.kt dice "Entity -> modelo", pero la app ya no tiene base local. Lo dejé como "Conversión a modelos de dominio"; revisa que sea correcto.
-- UserDataStore.kt: lo agregué al árbol porque tu texto lo menciona. Revisa que esté en data/remote/.
