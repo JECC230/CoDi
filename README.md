@@ -1,6 +1,6 @@
 # CoDi — encuentra a tu roomie ideal
 
-**CoDi** (**co**mpañeros de **di**vidir cuarto) es una app de Android para encontrar roomies compatibles. Funciona como Tinder: deslizas entre perfiles, haces match y chateas dentro de la app.
+**CoDi**  es una app de Android para encontrar roomies compatibles. Funciona como Tinder: deslizas entre perfiles, haces match y chateas dentro de la app.
 
 Esta es la **v1**, que solo cubre dos cosas: descubrir roomies y administrar tu cuenta y tu perfil.
 
